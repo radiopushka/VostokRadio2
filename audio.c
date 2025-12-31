@@ -29,7 +29,7 @@ double* pre_eq;
 //gain controller
 double attack = 0.01;
 double release = 0.0001;
-double target = 2.3e9;//3e9 for pi zero and 6e9 for normal setups
+double target = 2.2e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 2e6;
 
 
@@ -107,7 +107,7 @@ int main(){
     pre_eq[7]=1.1;
     pre_eq[8]=1.05;
     //release settings:
-    l_release[0]=0.1;
+    l_release[0]=0.01;
     l_release[1]=0.2;
 
     //FFT resampling mono

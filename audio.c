@@ -37,6 +37,13 @@ double noise_th = 1e6;
 double stereo_ratio = 0.3;
 
 
+//high pass filter
+const double alpha = (40.0)/48000.0;//20hz
+double nalpha = 1-alpha;//10hz
+double hpv_l = 0;
+double hpv_r = 0;
+
+
 int main(){
 
     int mpx_b = 189999;
@@ -156,6 +163,10 @@ int main(){
 
             double l = (double)(*sp);
             double r = (double)(*(sp+1));
+            hpv_r = hpv_r*nalpha+r*alpha;
+            hpv_l = hpv_l*nalpha+l*alpha;
+            r = r - hpv_r;
+            l = l - hpv_l;
             gain_control(gc,&l,&r);
             double sum = l+r;
             double diff = l-r;

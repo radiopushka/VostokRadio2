@@ -79,13 +79,13 @@ void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit
 
 }
 //gain controller
-
+int agc_lookahead = 100;
 struct Gain_Control* gain_control_init(double attack, double release, double target,double noise_th){
     struct Gain_Control* gc = malloc(sizeof(struct Gain_Control));
     gc->attack = attack;
     gc->release = release;
     gc->target = target;
-    gc->RMS_sum = malloc(sizeof(double)*1024);
+    gc->RMS_sum = malloc(sizeof(double)*agc_lookahead);
     gc->gain = 1.0;
     gc->noise_th = noise_th;
     return gc;
@@ -107,7 +107,7 @@ void gain_control(struct Gain_Control* gc, double* levo, double* pravo){
     sum = sum*sum;
 
     double run_sum = 0;
-    for(int i = 1023;i>0;i--){
+    for(int i = agc_lookahead-1;i>0;i--){
         double val = gc->RMS_sum[i-1];
         run_sum = run_sum + val;
         gc->RMS_sum[i] = val;

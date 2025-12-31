@@ -98,16 +98,17 @@ int main(){
     */
 
     //user setting for eq 9 bins
-    pre_eq[0]=1;
-    pre_eq[1]=1;
-    pre_eq[2]=1;
-    pre_eq[3]=1;
-    pre_eq[5]=1.05;
-    pre_eq[6]=1.1;
-    pre_eq[7]=1.1;
-    pre_eq[8]=1.05;
+    pre_eq[0]=0.05;
+    pre_eq[1]=0.2;
+    pre_eq[2]=0.4;
+    pre_eq[3]=0.5;
+    pre_eq[4]=0.7;
+    pre_eq[5]=0.8;
+    pre_eq[6]=1;
+    pre_eq[7]=1.2;
+    pre_eq[8]=1.4;
     //release settings:
-    l_release[0]=0.0005;
+    l_release[0]=0.0001;
     l_release[1]=0.01;
 
     //FFT resampling mono

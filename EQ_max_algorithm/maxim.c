@@ -80,7 +80,7 @@ void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit
 
 }
 //gain controller
-int agc_lookahead = 100;
+int agc_lookahead = 1024;
 struct Gain_Control* gain_control_init(double attack, double release, double target,double noise_th){
     struct Gain_Control* gc = malloc(sizeof(struct Gain_Control));
     gc->attack = attack;

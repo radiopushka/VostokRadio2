@@ -22,7 +22,7 @@ double limit_value = 2.3e9;
 double l_release = 0.5;
 double harmonic_diff = 0.6;
 
-int bins = 45;
+int bins = 15;
 //pre limiter equalization
 double* pre_eq;
 //gain controller

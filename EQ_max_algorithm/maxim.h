@@ -3,7 +3,7 @@
 
 //FFT resampling based limiter and bandwidth expander
 double find_amp(double* fft_out,int bins);
-void adjust_eq(double* eq,double* fft_out,int* rastoyane,int bins,double limit,double suma,double* helper,double release,double harmonic_diff);
+void adjust_eq(double* eq,double* fft_out,int* rastoyane,int bins,double limit,double suma,double* helper,double* release,double harmonic_diff);
 
 //gain controller
 struct Gain_Control{

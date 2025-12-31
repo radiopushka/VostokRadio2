@@ -19,14 +19,15 @@ double find_amp(double *fft_out, int bins){
  * f1_ratio = f1_ratio_old * compression + (1 - compression) / elements
  *
  */
-void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit,double suma,double* helper,double release,double harmonic_diff){
+void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit,double suma,double* helper,double* restrict release,double harmonic_diff){
     double max_diff = harmonic_diff;
-
+    double* restrict release_ittr = release;
     if(suma<limit){
         for(double* restrict ei = eq;ei<eq+bins;ei++){
             double teq = 1.0;
             double diff = teq - *ei;
-            *ei = *ei + diff*release;
+            *ei = *ei + diff*(*release);
+            release++;
         }
         return;
     }
@@ -70,9 +71,17 @@ void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit
             double distance = (*r_ittr);
             double current = *eq_ittr;
 
-            double diff = eq_targ-current;
+            if(eq_targ<*eq_ittr || (*release_ittr > 0.4)){
+                double diff = eq_targ-current;
 
-            *eq_ittr = *eq_ittr+(diff/distance);
+                *eq_ittr = *eq_ittr+(diff/distance);
+            }else{
+                double diff = eq_targ-current;
+
+                *eq_ittr = *eq_ittr+(diff*(*release_ittr));
+
+            }
+            release_ittr++;
 
         }
     }

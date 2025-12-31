@@ -16,10 +16,10 @@ const double int_value = 2147483647.0;
 //user settings:
 double pilot_amp = 0.15;
 //post AGC limiter amp and image spectral limiter
-double pre_amp = 1;
+double pre_amp = 0.7;
 double post_amp =  1;
-double limit_value = 2.7e9;
-double l_release = 0.5;
+double limit_value = 2.3e9;
+double* l_release;
 double harmonic_diff = 0.6;
 
 //the raspberry pi zero can do 9 bins max
@@ -27,10 +27,10 @@ int bins = 9;//valid values: 5,9,15,30,45
 //pre limiter equalization
 double* pre_eq;
 //gain controller
-double attack = 0.005;
+double attack = 0.01;
 double release = 0.0001;
-double target = 3e9;//3e9 for pi zero and 6e9 for normal setups
-double noise_th = 1e6;
+double target = 2.7e9;//3e9 for pi zero and 6e9 for normal setups
+double noise_th = 2e6;
 
 
 //mono to st_ratio
@@ -38,7 +38,7 @@ double stereo_ratio = 0.3;
 
 
 //high pass filter
-const double alpha = (100.0)/48000.0;
+const double alpha = (400.0)/48000.0;
 double nalpha = 1-alpha;//10hz
 double hpv_l = 0;
 double hpv_r = 0;
@@ -72,10 +72,12 @@ int main(){
     double eq_helper[bins];
     double eq_helper_s[bins];
     pre_eq = malloc(sizeof(double)*bins);
+    l_release = malloc(sizeof(double)*bins);
     for(int i = 0;i<bins;i++){
         eq[i] = 1;
         eq_s[i] = 1;
         pre_eq[i] = 1;
+        l_release[i] = 0.5;
     }
     //user setting eq for 45 bins
     /*
@@ -96,14 +98,17 @@ int main(){
     */
 
     //user setting for eq 9 bins
-    pre_eq[0]=0.1;
-    pre_eq[1]=0.1;
-    pre_eq[2]=0.3;
-    pre_eq[3]=0.8;
-    pre_eq[5]=1.5;
-    pre_eq[6]=1.5;
-    pre_eq[7]=1.5;
-    pre_eq[8]=1.5;
+    pre_eq[0]=1;
+    pre_eq[1]=1;
+    pre_eq[2]=1;
+    pre_eq[3]=1;
+    pre_eq[5]=1.05;
+    pre_eq[6]=1.1;
+    pre_eq[7]=1.1;
+    pre_eq[8]=1.05;
+    //release settings:
+    l_release[0]=0.1;
+    l_release[1]=0.2;
 
     //FFT resampling mono
     struct FFT_rsmp *rsmp = FFT_resample_init(bins,2, 1000, 16000, rate1);
@@ -161,8 +166,8 @@ int main(){
         set_gain_control(gc,target,attack,release,noise_th);
         for(int* sp = recbuff;sp<recbuff_end;sp = sp+2){
 
-            double l = (double)(*sp);
-            double r = (double)(*(sp+1));
+            double l = ((double)(*sp))*pre_amp;
+            double r = ((double)(*(sp+1)))*pre_amp;
             hpv_r = hpv_r*nalpha+r*alpha;
             hpv_l = hpv_l*nalpha+l*alpha;
             r = r - hpv_r;
@@ -170,8 +175,8 @@ int main(){
             gain_control(gc,&l,&r);
             double sum = l+r;
             double diff = l-r;
-            *i_mb = sum*pre_amp;
-            *i_sb = diff*pre_amp;
+            *i_mb = sum;
+            *i_sb = diff;
             i_mb++;
             i_sb++;
 

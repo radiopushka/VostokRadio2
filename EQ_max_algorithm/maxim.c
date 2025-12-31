@@ -1,6 +1,7 @@
 #include "maxim.h"
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 
 double find_amp(double *fft_out, int bins){
@@ -86,6 +87,7 @@ struct Gain_Control* gain_control_init(double attack, double release, double tar
     gc->release = release;
     gc->target = target;
     gc->RMS_sum = malloc(sizeof(double)*agc_lookahead);
+    memset(gc->RMS_sum,0,sizeof(double)*agc_lookahead);
     gc->gain = 1.0;
     gc->noise_th = noise_th;
     return gc;

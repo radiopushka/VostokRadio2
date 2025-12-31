@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 
 char* recording = "default";
@@ -49,8 +50,11 @@ int main(){
 
     int* recbuff = malloc(sizeof(int)*i_buffer_size);
     int* recbuff_end = recbuff+i_buffer_size;
+    memset(recbuff,0, sizeof(int)*i_buffer_size);
     double* midbuff_m = malloc(sizeof(double)*half_b);
     double* midbuff_s = malloc(sizeof(double)*half_b);
+    memset(midbuff_m,0,sizeof(double)*half_b);
+    memset(midbuff_s,0,sizeof(double)*half_b);
     int* output = malloc(sizeof(int)*rate1);
 
 

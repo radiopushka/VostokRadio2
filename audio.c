@@ -18,7 +18,7 @@ double pilot_amp = 0.15;
 //post AGC limiter amp and image spectral limiter
 double pre_amp = 1;
 double post_amp =  1;
-double limit_value = 2.3e9;
+double limit_value = 2.7e9;
 double l_release = 0.5;
 double harmonic_diff = 0.6;
 
@@ -27,7 +27,7 @@ int bins = 9;//valid values: 5,9,15,30,45
 //pre limiter equalization
 double* pre_eq;
 //gain controller
-double attack = 0.001;
+double attack = 0.0005;
 double release = 0.0001;
 double target = 3e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 1e6;

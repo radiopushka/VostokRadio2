@@ -38,7 +38,7 @@ double stereo_ratio = 0.3;
 
 
 //high pass filter
-const double alpha = (40.0)/48000.0;//20hz
+const double alpha = (100.0)/48000.0;
 double nalpha = 1-alpha;//10hz
 double hpv_l = 0;
 double hpv_r = 0;

@@ -107,8 +107,8 @@ int main(){
     pre_eq[7]=1.1;
     pre_eq[8]=1.05;
     //release settings:
-    l_release[0]=0.01;
-    l_release[1]=0.2;
+    l_release[0]=0.0005;
+    l_release[1]=0.01;
 
     //FFT resampling mono
     struct FFT_rsmp *rsmp = FFT_resample_init(bins,2, 1000, 16000, rate1);

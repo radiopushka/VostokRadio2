@@ -18,21 +18,31 @@ struct FFT_rsmp{
 
     int ring_buffer_size;
     int* count_buff;
+    int* count_buff_i;
+    int* count_buff_e;
     int* rastoyanee;
 
     double* lpf_r;
     double** lpf_r_v;
+    double** lpf_r_i;
     double* lpf_i;
     double** lpf_i_v;
+    double** lpf_i_i;
 
-    double** cos_array;
-    double** sin_array;
+    double** lpf_i_l;
+    double** lpf_r_l;
+
+
+    double* dsp_array;
+
     int length;
     int counter;
 
     //amplitude
     double* amplitude;
     double** amplitude_ring;
+    double** amplitude_ring_end;
+    double** amplitude_ring_i;
 };
 
 struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, float fend,float srate);

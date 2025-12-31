@@ -66,10 +66,10 @@ void adjust_eq(double *eq,double* fft_out,int* rastoyane, int bins, double limit
     for(double* restrict eq_ittr = eq;eq_ittr<eq+bins;eq_ittr++,helper_ittr++,fft_out_ittr++,r_ittr++){
         if(*fft_out_ittr!=0){
             double mult = (*helper_ittr);
-            double target = (mult*limit);
-            double eq_targ = (target/(*fft_out_ittr));
             double distance = (*r_ittr);
             double current = *eq_ittr;
+            double target = (mult*limit);
+            double eq_targ = (target/(*fft_out_ittr));
 
             if(eq_targ<*eq_ittr || (*release_ittr > 0.4)){
                 double diff = eq_targ-current;
@@ -120,20 +120,20 @@ void gain_control(struct Gain_Control* gc, double* levo, double* pravo){
     sum = sum*sum;
 
     double run_sum = 0;
-    for(int i = agc_lookahead-1;i>0;i--){
-        double val = gc->RMS_sum[i-1];
+    for(double* restrict i = gc->RMS_sum + (agc_lookahead-1);i>gc->RMS_sum;i--){
+        double val = *(i-1);
         run_sum = run_sum + val;
-        gc->RMS_sum[i] = val;
+        *i = val;
     }
     run_sum = run_sum + sum;
-    gc->RMS_sum[0] = sum;
+    *(gc->RMS_sum) = sum;
 
 
 
 
     double rms_val_ps = run_sum/1024.0;
 
-    double rms_val = sqrt(rms_val_ps);
+    double rms_val = sqrtf(rms_val_ps);
 
     if(rms_val<gc->noise_th){
         if(gc->gain<0.9){

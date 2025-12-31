@@ -98,7 +98,7 @@ int main(){
     */
 
     //user setting for eq 9 bins
-    pre_eq[0]=0.05;
+    pre_eq[0]=0.005;
     pre_eq[1]=0.2;
     pre_eq[2]=0.4;
     pre_eq[3]=0.5;

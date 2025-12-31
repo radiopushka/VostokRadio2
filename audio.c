@@ -22,7 +22,8 @@ double limit_value = 2.3e9;
 double l_release = 0.5;
 double harmonic_diff = 0.6;
 
-int bins = 15;
+//the raspberry pi zero can do 9 bins max
+int bins = 9;//valid values: 5,9,15,30,45
 //pre limiter equalization
 double* pre_eq;
 //gain controller
@@ -69,7 +70,8 @@ int main(){
         eq_s[i] = 1;
         pre_eq[i] = 1;
     }
-    //user setting eq
+    //user setting eq for 45 bins
+    /*
     pre_eq[0]=0.0001;
     pre_eq[1]=0.001;
     pre_eq[2]=0.001;
@@ -84,7 +86,17 @@ int main(){
     pre_eq[41]=1.5;
     pre_eq[43]=1.5;
     pre_eq[44]=1.5;
+    */
 
+    //user setting for eq 9 bins
+    pre_eq[0]=0.1;
+    pre_eq[1]=0.1;
+    pre_eq[2]=0.3;
+    pre_eq[3]=0.8;
+    pre_eq[5]=1.5;
+    pre_eq[6]=1.5;
+    pre_eq[7]=1.5;
+    pre_eq[8]=1.5;
 
     //FFT resampling mono
     struct FFT_rsmp *rsmp = FFT_resample_init(bins,2, 1000, 16000, rate1);

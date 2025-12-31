@@ -11,6 +11,7 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
     rsmp->bins = bins;
 
 
+
     int fft_buff_len = srate+240;//prevent clicking so that all synthesized signals are being sampled
 
     rsmp->hpf_alpha = (10.0f)/srate;//10hz high pass
@@ -197,10 +198,10 @@ void free_resamp(struct FFT_rsmp *rsmp){
     free(rsmp->count_buff);
     free(rsmp->rastoyanee);
     free(rsmp->lpf_r_v);
-    free(rsmp->lpf_r_v);
     free(rsmp->lpf_i_v);
     free(rsmp->amplitude_ring);
     free(rsmp->cos_array);
     free(rsmp->sin_array);
+    free(rsmp);
 
 }

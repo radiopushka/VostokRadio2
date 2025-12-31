@@ -105,8 +105,8 @@ int main(){
     pre_eq[4]=0.7;
     pre_eq[5]=0.8;
     pre_eq[6]=1;
-    pre_eq[7]=1.2;
-    pre_eq[8]=1.4;
+    pre_eq[7]=1.1;
+    pre_eq[8]=1.1;
     //release settings:
     l_release[0]=0.0001;
     l_release[1]=0.01;

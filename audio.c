@@ -29,7 +29,7 @@ double* pre_eq;
 //gain controller
 double attack = 0.01;
 double release = 0.0001;
-double target = 2.2e9;//3e9 for pi zero and 6e9 for normal setups
+double target = 2e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 2e6;
 
 

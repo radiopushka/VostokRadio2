@@ -51,14 +51,17 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
     rsmp->length = fft_buff_len;
     rsmp->counter = 0;
 
-    rsmp->cos_array = malloc(bins*sizeof(double*));
-    rsmp->sin_array = malloc(bins*sizeof(double*));
+    rsmp->cos_array = malloc(rsmp->length*sizeof(double*));
+    rsmp->sin_array = malloc(rsmp->length*sizeof(double*));
+    for(int i = 0;i<rsmp->length;i++){
+        rsmp->cos_array[i] = malloc(sizeof(double)*bins);
+        rsmp->sin_array[i] = malloc(sizeof(double)*bins);
+
+    }
 
     float fcnt = fs;
     for(int i = 0;i<bins;i++){
         double shifter = (fcnt/(srate * 4))*(2*M_PI);
-        rsmp->cos_array[i] = malloc(sizeof(double)*rsmp->length);
-        rsmp->sin_array[i] = malloc(sizeof(double)*rsmp->length);
 
         long double counter = 0;
         for(int i2 = 0;i2<rsmp->length;i2++){
@@ -76,8 +79,8 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
             }
             ac = ac/4.0;
             as = as/4.0;
-            rsmp->cos_array[i][i2] = ac;
-            rsmp->sin_array[i][i2] = as;
+            rsmp->cos_array[i2][i] = ac;
+            rsmp->sin_array[i2][i] = as;
         }
 
 
@@ -138,14 +141,15 @@ double* resamp_pre_process(struct FFT_rsmp *rsmp, double in,double* restrict eq)
     double mod = in - rsmp->pre_high_pass;
 
     for(int ic = 0;ic<rsmp->bins;ic++){
-        double r = mod*carray[ic][cnt];
-        double i = mod*sarray[ic][cnt];
+        double r = mod*carray[cnt][ic];
+        double i = mod*sarray[cnt][ic];
         r = r*(*eq);
         i = i*(*eq);
 
         *lpi = (*lpi)*rsmp->nalpha + i*(rsmp->alpha);
         *lpr = (*lpr)*rsmp->nalpha + r*(rsmp->alpha);
-        *amp = sqrt((*lpi)*(*lpi) + (*lpr)*(*lpr));
+        //speed optimization
+        *amp = sqrtf((float)((*lpi)*(*lpi) + (*lpr)*(*lpr)));
         lpi++; lpr++; amp++;
         eq++;
 
@@ -173,7 +177,7 @@ double resamp_get_signal(struct FFT_rsmp *rsmp, double* eq){
     double output = 0;
     for(int ic = 0;ic<rsmp->bins;ic++){
 
-        double sval = (*lpi)*sarray[ic][cnt] + (*lpr)*carray[ic][cnt];
+        double sval = (*lpi)*sarray[cnt][ic] + (*lpr)*carray[cnt][ic];
         lpi++;
         lpr++;
         output += sval*(*eq);
@@ -186,7 +190,7 @@ void free_resamp(struct FFT_rsmp *rsmp){
     free(rsmp->lpf_r);
     free(rsmp->lpf_i);
     free(rsmp->amplitude);
-    for(int i = 0;i<rsmp->bins;i++){
+    for(int i = 0;i<rsmp->length;i++){
         free(rsmp->cos_array[i]);
         free(rsmp->sin_array[i]);
     }

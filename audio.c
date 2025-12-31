@@ -29,7 +29,7 @@ double* pre_eq;
 //gain controller
 double attack = 0.01;
 double release = 0.0001;
-double target = 2e9;//3e9 for pi zero and 6e9 for normal setups
+double target = 2.6e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 2e6;
 
 
@@ -38,13 +38,26 @@ double stereo_ratio = 0.3;
 
 
 //high pass filter
-const double alpha = (400.0)/48000.0;
-double nalpha = 1-alpha;//10hz
+double alpha = (400.0)/48000.0;
+double nalpha;//10hz
 double hpv_l = 0;
 double hpv_r = 0;
 
-
+//bass boost
+double alpha2 = (100.0)/48000.0;
+double nalpha2;//10hz
+double bhpv_l = 0;
+double bhpv_r = 0;
+double bass_boost = 0.4;
+double nbass_boost;
+//so that we can call this later from a gui
+void pre_set_settings(){
+    nalpha = 1-alpha;
+    nalpha2 = 1-alpha2;
+    nbass_boost = 1-bass_boost;
+}
 int main(){
+    pre_set_settings();
 
     int mpx_b = 189999;
 
@@ -100,16 +113,16 @@ int main(){
     //user setting for eq 9 bins
     pre_eq[0]=0.005;
     pre_eq[1]=0.2;
-    pre_eq[2]=0.4;
-    pre_eq[3]=0.5;
-    pre_eq[4]=0.7;
+    pre_eq[2]=0.7;
+    pre_eq[3]=0.75;
+    pre_eq[4]=0.78;
     pre_eq[5]=0.8;
     pre_eq[6]=1;
     pre_eq[7]=1.1;
     pre_eq[8]=1.1;
     //release settings:
-    l_release[0]=0.0001;
-    l_release[1]=0.01;
+    l_release[0]=0.0000001;
+    l_release[1]=0.0001;
 
     //FFT resampling mono
     struct FFT_rsmp *rsmp = FFT_resample_init(bins,2, 1000, 16000, rate1);
@@ -174,6 +187,10 @@ int main(){
             r = r - hpv_r;
             l = l - hpv_l;
             gain_control(gc,&l,&r);
+            bhpv_r = bhpv_r*nalpha2+r*alpha2;
+            bhpv_l = bhpv_l*nalpha2+l*alpha2;
+            l = l*(nbass_boost)+bhpv_l*bass_boost;
+            r = r*(nbass_boost)+bhpv_r*bass_boost;
             double sum = l+r;
             double diff = l-r;
             *i_mb = sum;

@@ -29,7 +29,7 @@ double* pre_eq;
 //gain controller
 double attack = 0.01;
 double release = 0.0001;
-double target = 2.6e9;//3e9 for pi zero and 6e9 for normal setups
+double target = 4e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 2e6;
 
 
@@ -44,16 +44,13 @@ double hpv_l = 0;
 double hpv_r = 0;
 
 //bass boost
-double alpha2 = (100.0)/48000.0;
-double nalpha2;//10hz
 double bhpv_l = 0;
 double bhpv_r = 0;
-double bass_boost = 0.4;
+double bass_boost = 0.6;
 double nbass_boost;
 //so that we can call this later from a gui
 void pre_set_settings(){
     nalpha = 1-alpha;
-    nalpha2 = 1-alpha2;
     nbass_boost = 1-bass_boost;
 }
 int main(){
@@ -187,10 +184,10 @@ int main(){
             r = r - hpv_r;
             l = l - hpv_l;
             gain_control(gc,&l,&r);
-            bhpv_r = bhpv_r*nalpha2+r*alpha2;
-            bhpv_l = bhpv_l*nalpha2+l*alpha2;
-            l = l*(nbass_boost)+bhpv_l*bass_boost;
-            r = r*(nbass_boost)+bhpv_r*bass_boost;
+            bhpv_r = bhpv_r*nalpha+r*alpha;
+            bhpv_l = bhpv_l*nalpha+l*alpha;
+            l = l*nbass_boost+bhpv_l*bass_boost;
+            r = r*nbass_boost+bhpv_r*bass_boost;
             double sum = l+r;
             double diff = l-r;
             *i_mb = sum;

@@ -115,7 +115,8 @@ void gain_control(struct Gain_Control* gc, double* levo, double* pravo){
     double release = gc->release;
     double left = *levo;
     double right = *pravo;
-    double sum = (left+right);
+    double stereo = left-right;
+    double sum = ((left+right)+stereo)/2.0;
     sum = sum*sum;
 
     double run_sum = 0;

@@ -122,8 +122,8 @@ int main(){
     l_release[1]=0.0001;
 
     //FFT resampling mono
-    struct FFT_rsmp *rsmp = FFT_resample_init(bins,2, 1000, 16000, rate1);
-    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,2, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp = FFT_resample_init(bins,3, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,3, 1000, 16000, rate1);
     //gain controller
     struct Gain_Control *gc = gain_control_init(attack,release,target,noise_th);
 

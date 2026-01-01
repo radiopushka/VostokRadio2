@@ -30,6 +30,8 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
     rsmp->pre_high_pass = 0;
     rsmp->lpf_r = malloc(bins*sizeof(double));
     rsmp->lpf_i = malloc(bins*sizeof(double));
+    memset(rsmp->lpf_r, 0, bins*sizeof(double));
+    memset(rsmp->lpf_i, 0, bins*sizeof(double));
     rsmp->lpf_r_v = malloc(ring_buffer_delay*sizeof(double*));
     rsmp->lpf_i_v = malloc(ring_buffer_delay*sizeof(double*));
     for(int i = 0;i<ring_buffer_delay;i++){

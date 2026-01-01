@@ -6,9 +6,13 @@
 #include <math.h>
 #include <string.h>
 
+//the Raspberry Pi will have no cli control, purely config file based
+//CPU is limited
+#include "./config_file/config.h"
 
-char* recording = "default";
-char* playback ="default";
+
+char recording[32];
+char playback[32];
 
 const float int_value = 2147483647.0;
 //rates fixed to 48khz and 192 khz
@@ -21,14 +25,14 @@ float post_amp =  1;
 float limit_value = 2.3e9;
 float* l_release;
 float harmonic_diff = 0.6;
-
+int lookahead = 3;
 //the raspberry pi zero can do 9 bins max
 int bins = 9;//valid values: 5,9,15,30,45
 //pre limiter equalization
 float* pre_eq;
 //gain controller
-float attack = 0.01;
-float release = 0.001;
+float attack = 0.03;
+float release = 0.003;
 float target = 6e9;//3e9 for pi zero and 6e9 for normal setups
 float noise_th = 2e6;
 
@@ -53,7 +57,142 @@ void pre_set_settings(){
     nalpha = 1-alpha;
     nbass_boost = 1-bass_boost;
 }
-int main(){
+void setup_globals_from_config(char* file){
+    CfgRaster cfg = read_cfg_file(file);
+    if(!cfg){
+        printf("config file not found\n");
+        return;
+    }
+
+    //audio playback recording
+    char* recording_f = get_value_by(cfg,"audio","iface");
+    char* playback_f = get_value_by(cfg,"audio","oface");
+    if(recording_f)
+        sprintf(recording,"%s",recording_f);
+    if(playback_f)
+        sprintf(playback,"%s",playback_f);
+    printf("read config\n");
+    printf("playback: %s, rec: %s\n",playback,recording);
+
+    //MPX settings
+    char* pilot_amp_f = get_value_by(cfg,"MPX","pilot_amp");
+    if(pilot_amp_f){
+        pilot_amp = atof(pilot_amp_f);
+        printf("pilot amp: %f\n",pilot_amp);
+    }
+
+    char* stereo_ratio_f = get_value_by(cfg,"MPX","stereo_ratio");
+    if(stereo_ratio_f){
+        stereo_ratio = atof(stereo_ratio_f);
+        printf("stereo ratio: %f\n",stereo_ratio);
+    }
+
+    //limiter
+    char* pre_amp_f = get_value_by(cfg,"limiter","pre_amp");
+    if(pre_amp_f){
+        pre_amp = atof(pre_amp_f);
+        printf("pre amp: %f\n",pre_amp);
+    }
+    char* lookahead_f = get_value_by(cfg,"limiter","lookahead");
+    if(lookahead_f){
+        lookahead = atoi(lookahead_f);
+        printf("lookahead: %d\n",lookahead);
+    }
+    char* post_amp_f = get_value_by(cfg,"limiter","post_amp");
+    if(post_amp_f){
+        post_amp = atof(post_amp_f);
+        printf("post amp: %f\n",post_amp);
+    }
+    char* limit_value_f = get_value_by(cfg,"limiter","limit");
+    if(limit_value_f){
+        limit_value = atof(limit_value_f);
+        printf("limit: %f\n",limit_value);
+    }
+    char* harmonic_diff_f = get_value_by(cfg,"limiter","save_harmonics");
+    if(harmonic_diff_f){
+        harmonic_diff = atof(harmonic_diff_f);
+        printf("harmonic diff: %f\n",harmonic_diff);
+    }
+
+    char* bins_f = get_value_by(cfg,"limiter","bins");
+    if(bins_f){
+        int bin_r = atoi(bins_f);
+        if(bin_r == 5 || bin_r == 9 || bin_r == 15 || bin_r == 30 || bin_r == 45){
+            bins = bin_r;
+        }
+        printf("bins: %d\n",bins);
+    }
+
+    //gain controller
+    char* attack_f = get_value_by(cfg,"agc","attack");
+    if(attack_f){
+        attack = atof(attack_f);
+        printf("attack: %f\n",attack);
+    }
+    char* release_f = get_value_by(cfg,"agc","release");
+    if(release_f){
+        release = atof(release_f);
+        printf("release: %f\n",release);
+    }
+    char* target_f = get_value_by(cfg,"agc","target");
+    if(target_f){
+        target = atof(target_f);
+        printf("target: %f\n",target);
+    }
+    char* noise_th_f = get_value_by(cfg,"agc","noise_th");
+    if(noise_th_f){
+        noise_th = atof(noise_th_f);
+        printf("noise th: %f\n",noise_th);
+    }
+
+    //high pass filter
+    char* alpha_f = get_value_by(cfg,"highpass","alpha");
+    if(alpha_f){
+        alpha = atof(alpha_f);
+        printf("alpha: %f\n",alpha);
+    }
+    //bass boost
+    char* bass_boost_f = get_value_by(cfg,"bassboost","boost");
+    if(bass_boost_f){
+        bass_boost = atof(bass_boost_f);
+        printf("bass boost: %f\n",bass_boost);
+    }
+
+    free_cfg_mem(cfg);
+
+}
+//setup the eq and limiter release
+void setup_from_config(float* eq,float* release,char* file){
+
+    CfgRaster cfg = read_cfg_file(file);
+    if(!cfg)
+        return;
+    char val[13];
+    for(int i = 0;i<bins;i++){
+        sprintf(val,"%d",i);
+
+        char* e_val = get_value_by(cfg,"eq",val);
+        char* r_val = get_value_by(cfg,"release",val);
+        if(e_val){
+            eq[i] = atof(e_val);
+        }
+        if(r_val){
+            release[i] = atof(r_val);
+        }
+
+    }
+
+    free_cfg_mem(cfg);
+
+}
+int main(int argn,char* argv[]){
+
+    if(argn >= 2){
+            setup_globals_from_config(argv[1]);
+    }else{
+        sprintf(recording,"default");
+        sprintf(playback,"default");
+    }
     pre_set_settings();
 
     int mpx_b = 189999;
@@ -89,7 +228,9 @@ int main(){
         pre_eq[i] = 1;
         l_release[i] = 0.5;
     }
-    //user setting eq for 45 bins
+    //user setting eq
+
+    //default setting eq 45 bins
     /*
     pre_eq[0]=0.0001;
     pre_eq[1]=0.001;
@@ -107,23 +248,29 @@ int main(){
     pre_eq[44]=1.5;
     */
 
-    //user setting for eq 9 bins
-    pre_eq[0]=0.005;
-    pre_eq[1]=0.2;
-    pre_eq[2]=0.7;
-    pre_eq[3]=0.75;
-    pre_eq[4]=0.78;
-    pre_eq[5]=0.8;
-    pre_eq[6]=1;
-    pre_eq[7]=1.1;
-    pre_eq[8]=1.1;
-    //release settings:
-    l_release[0]=0.0000001;
-    l_release[1]=0.0001;
+    //default setting for eq 9 bins
+    if(bins == 9){
+        pre_eq[0]=0.005;
+        pre_eq[1]=0.2;
+        pre_eq[2]=0.7;
+        pre_eq[3]=0.75;
+        pre_eq[4]=0.78;
+        pre_eq[5]=0.8;
+        pre_eq[6]=1;
+        pre_eq[7]=1.1;
+        pre_eq[8]=1.1;
+        //release settings:
+        l_release[0]=0.0000001;
+        l_release[1]=0.0001;
+    }
+    //user setting eq and release
+    if(argn >= 2){
+        setup_from_config(eq,l_release,argv[1]);
+    }
 
     //FFT resampling mono
-    struct FFT_rsmp *rsmp = FFT_resample_init(bins,3, 1000, 16000, rate1);
-    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,3, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp = FFT_resample_init(bins,lookahead, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,lookahead, 1000, 16000, rate1);
     //gain controller
     struct Gain_Control *gc = gain_control_init(attack,release,target,noise_th);
 

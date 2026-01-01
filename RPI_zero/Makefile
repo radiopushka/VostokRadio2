@@ -8,4 +8,4 @@ DEQ=./EQ_max_algorithm/maxim.c
 # CPU usage of 96-100% is normal
 
 all:
-	$(CC) audio.c $(FFT) $(DEQ) $(ALSA) $(RPI_FLAGS) $(OPT_FLAGS) -g -lm -lasound -Wall -o vtkradio
+	$(CC) audio.c $(FFT) $(DEQ) $(ALSA) $(PI_FLAGS) $(OPT_FLAGS) -g -lm -lasound -Wall -o vtkradio

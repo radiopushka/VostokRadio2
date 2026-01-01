@@ -29,7 +29,7 @@ float* pre_eq;
 //gain controller
 float attack = 0.01;
 float release = 0.001;
-float target = 4e9;//3e9 for pi zero and 6e9 for normal setups
+float target = 6e9;//3e9 for pi zero and 6e9 for normal setups
 float noise_th = 2e6;
 
 
@@ -46,7 +46,7 @@ float hpv_r = 0;
 //bass boost
 float bhpv_l = 0;
 float bhpv_r = 0;
-float bass_boost = 0.6;
+float bass_boost = 0.4;
 float nbass_boost;
 //so that we can call this later from a gui
 void pre_set_settings(){

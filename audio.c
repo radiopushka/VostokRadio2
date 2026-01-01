@@ -28,8 +28,8 @@ int bins = 9;//valid values: 5,9,15,30,45
 double* pre_eq;
 //gain controller
 double attack = 0.01;
-double release = 0.0001;
-double target = 5e9;//3e9 for pi zero and 6e9 for normal setups
+double release = 0.001;
+double target = 6e9;//3e9 for pi zero and 6e9 for normal setups
 double noise_th = 2e6;
 
 
@@ -46,7 +46,7 @@ double hpv_r = 0;
 //bass boost
 double bhpv_l = 0;
 double bhpv_r = 0;
-double bass_boost = 0.6;
+double bass_boost = 0.4;
 double nbass_boost;
 //so that we can call this later from a gui
 void pre_set_settings(){

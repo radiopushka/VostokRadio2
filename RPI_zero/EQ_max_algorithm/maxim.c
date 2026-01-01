@@ -131,7 +131,7 @@ void gain_control(struct Gain_Control* gc, float* levo, float* pravo){
 
 
 
-    float rms_val_ps = run_sum/1024.0;
+    float rms_val_ps = run_sum/agc_lookahead;
 
     float rms_val = sqrtf(rms_val_ps);
 

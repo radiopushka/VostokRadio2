@@ -28,28 +28,28 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
 
 
     rsmp->pre_high_pass = 0;
-    rsmp->lpf_r = malloc(bins*sizeof(double));
-    rsmp->lpf_i = malloc(bins*sizeof(double));
-    rsmp->lpf_r_v = malloc(ring_buffer_delay*sizeof(double*));
-    rsmp->lpf_i_v = malloc(ring_buffer_delay*sizeof(double*));
+    rsmp->lpf_r = malloc(bins*sizeof(float));
+    rsmp->lpf_i = malloc(bins*sizeof(float));
+    rsmp->lpf_r_v = malloc(ring_buffer_delay*sizeof(float*));
+    rsmp->lpf_i_v = malloc(ring_buffer_delay*sizeof(float*));
     for(int i = 0;i<ring_buffer_delay;i++){
-        rsmp->lpf_r_v[i] = malloc(sizeof(double)*bins);
-        rsmp->lpf_i_v[i] = malloc(sizeof(double)*bins);
-        memset(rsmp->lpf_r_v[i], 0, bins*sizeof(double));
-        memset(rsmp->lpf_i_v[i], 0, bins*sizeof(double));
+        rsmp->lpf_r_v[i] = malloc(sizeof(float)*bins);
+        rsmp->lpf_i_v[i] = malloc(sizeof(float)*bins);
+        memset(rsmp->lpf_r_v[i], 0, bins*sizeof(float));
+        memset(rsmp->lpf_i_v[i], 0, bins*sizeof(float));
     }
     rsmp->lpf_i_l = rsmp->lpf_i_v + ring_buffer_delay;
     rsmp->lpf_r_l = rsmp->lpf_r_v + ring_buffer_delay;
     rsmp->lpf_i_i = rsmp->lpf_i_v;
     rsmp->lpf_r_i = rsmp->lpf_r_v;
 
-    rsmp->amplitude = malloc(bins*sizeof(double));
-    memset(rsmp->amplitude, 0, bins*sizeof(double));
+    rsmp->amplitude = malloc(bins*sizeof(float));
+    memset(rsmp->amplitude, 0, bins*sizeof(float));
 
-    rsmp->amplitude_ring = malloc(ring_buffer_delay*sizeof(double*));
+    rsmp->amplitude_ring = malloc(ring_buffer_delay*sizeof(float*));
     for(int i = 0;i<ring_buffer_delay;i++){
-        rsmp->amplitude_ring[i] = malloc(sizeof(double)*bins);
-        memset(rsmp->amplitude_ring[i], 0, bins*sizeof(double));
+        rsmp->amplitude_ring[i] = malloc(sizeof(float)*bins);
+        memset(rsmp->amplitude_ring[i], 0, bins*sizeof(float));
     }
     rsmp->amplitude_ring_i = rsmp->amplitude_ring;
     rsmp->amplitude_ring_end = rsmp->amplitude_ring + ring_buffer_delay;
@@ -61,15 +61,15 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
     rsmp->counter = 0;
 
     int size_dsp = (rsmp->length*bins)*2;
-    rsmp->dsp_array = malloc(size_dsp*sizeof(double));
-    /*for(double* i = rsmp->dsp_array;i<rsmp->dsp_array+size_dsp;i++){
+    rsmp->dsp_array = malloc(size_dsp*sizeof(float));
+    /*for(float* i = rsmp->dsp_array;i<rsmp->dsp_array+size_dsp;i++){
         *i = 0;
 
     }*/
 
     float fcnt = fs;
     for(int i = 0;i<bins;i++){
-        double shifter = (fcnt/(srate * 4))*(2*M_PI);
+        float shifter = (fcnt/(srate * 4))*(2*M_PI);
 
         long double counter = 0;
         for(int i2 = 0;i2<rsmp->length;i2++){
@@ -89,8 +89,8 @@ struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, flo
             as = as/4.0;
 
             int location = i2*(bins*2) + i*2;
-            double* cval = rsmp->dsp_array + location;
-            double* sval = rsmp->dsp_array + location + 1;
+            float* cval = rsmp->dsp_array + location;
+            float* sval = rsmp->dsp_array + location + 1;
             *cval = ac;
             *sval = as;
         }
@@ -112,15 +112,15 @@ void calc_max_buffer_amp(struct FFT_rsmp *rsmp){
     for(int* restrict  i = rsmp->rastoyanee;i<rsmp->rastoyanee+rsmp->bins;i++){
         *i = rsmp->ring_buffer_size;
     }
-    double* a_end = rsmp->amplitude + rsmp->bins;
-    double** restrict i_camp = rsmp->amplitude_ring_i+1;
+    float* a_end = rsmp->amplitude + rsmp->bins;
+    float** restrict i_camp = rsmp->amplitude_ring_i+1;
     for(int i = 1;i<rsmp->ring_buffer_size;i++,i_camp++){
         if(i_camp >= rsmp->amplitude_ring_end)
             i_camp = rsmp->amplitude_ring;
-        double* restrict amp_list = *i_camp;
+        float* restrict amp_list = *i_camp;
         int* restrict rastoyanee = rsmp->rastoyanee;
-        for(double* restrict i2 = rsmp->amplitude;i2<a_end;i2++,amp_list++,rastoyanee++){
-            double lamp = *amp_list;
+        for(float* restrict i2 = rsmp->amplitude;i2<a_end;i2++,amp_list++,rastoyanee++){
+            float lamp = *amp_list;
             if(lamp > *i2){
                 *rastoyanee = (rsmp->ring_buffer_size) - i;
                 *i2 = lamp;
@@ -128,12 +128,12 @@ void calc_max_buffer_amp(struct FFT_rsmp *rsmp){
         }
     }
 }
-double* resamp_pre_process(struct FFT_rsmp *rsmp, double in,double* restrict eq){
-    double* restrict lpr = rsmp->lpf_r;
-    double* restrict lpi = rsmp->lpf_i;
-    double* restrict amp = rsmp->amplitude;
+float* resamp_pre_process(struct FFT_rsmp *rsmp, float in,float* restrict eq){
+    float* restrict lpr = rsmp->lpf_r;
+    float* restrict lpi = rsmp->lpf_i;
+    float* restrict amp = rsmp->amplitude;
 
-    double* restrict darray = rsmp->dsp_array;
+    float* restrict darray = rsmp->dsp_array;
 
     int cnt = rsmp->counter;
     cnt++;
@@ -146,12 +146,12 @@ double* resamp_pre_process(struct FFT_rsmp *rsmp, double in,double* restrict eq)
 
     rsmp->pre_high_pass = rsmp->pre_high_pass*rsmp->hpf_nalpha + in*rsmp->hpf_alpha;
 
-    double mod = in - rsmp->pre_high_pass;
+    float mod = in - rsmp->pre_high_pass;
 
-    double* dend = darray + index + (rsmp->bins<<1);
-    for(double* restrict ic = darray + index;ic<dend;ic = ic+2,lpi++,lpr++,amp++,eq++){
-        double r = mod*(*ic);
-        double i = mod*(*(ic+1));
+    float* dend = darray + index + (rsmp->bins<<1);
+    for(float* restrict ic = darray + index;ic<dend;ic = ic+2,lpi++,lpr++,amp++,eq++){
+        float r = mod*(*ic);
+        float i = mod*(*(ic+1));
         r = r*(*eq);
         i = i*(*eq);
 
@@ -170,14 +170,14 @@ double* resamp_pre_process(struct FFT_rsmp *rsmp, double in,double* restrict eq)
         rsmp->lpf_r_i = rsmp->lpf_r_v;
     if(rsmp->lpf_i_i >= rsmp->lpf_i_l)
         rsmp->lpf_i_i = rsmp->lpf_i_v;
-    memcpy(*(rsmp->lpf_r_i),rsmp->lpf_r,rsmp->bins*sizeof(double));
-    memcpy(*(rsmp->lpf_i_i),rsmp->lpf_i,rsmp->bins*sizeof(double));
+    memcpy(*(rsmp->lpf_r_i),rsmp->lpf_r,rsmp->bins*sizeof(float));
+    memcpy(*(rsmp->lpf_i_i),rsmp->lpf_i,rsmp->bins*sizeof(float));
 
 
     rsmp->amplitude_ring_i = rsmp->amplitude_ring_i + 1;
     if(rsmp->amplitude_ring_i >= rsmp->amplitude_ring_end)
         rsmp->amplitude_ring_i = rsmp->amplitude_ring;
-    memcpy(*(rsmp->amplitude_ring_i),rsmp->amplitude,rsmp->bins*sizeof(double));
+    memcpy(*(rsmp->amplitude_ring_i),rsmp->amplitude,rsmp->bins*sizeof(float));
     //now find the maximum amplitude for each frequency and calculate the number of samples before it reaches get_signal
 
     rsmp->count_buff_i = rsmp->count_buff_i + 1;
@@ -189,19 +189,19 @@ double* resamp_pre_process(struct FFT_rsmp *rsmp, double in,double* restrict eq)
     return rsmp->amplitude;
 }
 
-double resamp_get_signal(struct FFT_rsmp *rsmp, double* eq){
-    double** restrict lp_r = rsmp->lpf_r_i+1;
+float resamp_get_signal(struct FFT_rsmp *rsmp, float* eq){
+    float** restrict lp_r = rsmp->lpf_r_i+1;
     if(lp_r >= rsmp->lpf_r_l)
         lp_r = rsmp->lpf_r_v;
-    double* restrict lpr = *lp_r;
+    float* restrict lpr = *lp_r;
 
-    double** restrict lp_i = rsmp->lpf_i_i+1;
+    float** restrict lp_i = rsmp->lpf_i_i+1;
     if(lp_i >= rsmp->lpf_i_l)
         lp_i = rsmp->lpf_i_v;
-    double* restrict lpi = *lp_i;
+    float* restrict lpi = *lp_i;
 
 
-    double* restrict darray = rsmp->dsp_array;
+    float* restrict darray = rsmp->dsp_array;
 
     int* count = rsmp->count_buff_i+1;
     if(count >= rsmp->count_buff_e)
@@ -210,12 +210,12 @@ double resamp_get_signal(struct FFT_rsmp *rsmp, double* eq){
 
     int cnt = *count;
 
-    double* dend = darray + cnt + (rsmp->bins<<1);
+    float* dend = darray + cnt + (rsmp->bins<<1);
 
-    double output = 0;
-    for(double* restrict ic = darray + cnt;ic<dend;ic = ic+2,lpi++,lpr++,eq++){
+    float output = 0;
+    for(float* restrict ic = darray + cnt;ic<dend;ic = ic+2,lpi++,lpr++,eq++){
 
-        double sval = (*lpi)*(*(ic+1)) + (*lpr)*(*ic);
+        float sval = (*lpi)*(*(ic+1)) + (*lpr)*(*ic);
         output += sval*(*eq);
     }
     return output;

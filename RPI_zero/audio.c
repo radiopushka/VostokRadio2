@@ -28,8 +28,8 @@ int bins = 9;//valid values: 5,9,15,30,45
 float* pre_eq;
 //gain controller
 float attack = 0.01;
-float release = 0.0001;
-float target = 5e9;//3e9 for pi zero and 6e9 for normal setups
+float release = 0.001;
+float target = 4e9;//3e9 for pi zero and 6e9 for normal setups
 float noise_th = 2e6;
 
 

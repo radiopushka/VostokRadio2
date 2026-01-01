@@ -4,7 +4,8 @@ FFT=./FFT/FFT.c
 ALSA=./alsa_pipe/main.c
 DEQ=./EQ_max_algorithm/maxim.c
 
-
+# lite version optimized and tested to run on the Raspberry Pi Zero W
+# CPU usage of 96-100% is normal
 
 all:
-	$(CC) audio.c $(FFT) $(DEQ) $(ALSA) -O3 -march=native $(OPT_FLAGS) -g -lm -lasound -Wall -o vtkradio
+	$(CC) audio.c $(FFT) $(DEQ) $(ALSA) $(RPI_FLAGS) $(OPT_FLAGS) -g -lm -lasound -Wall -o vtkradio

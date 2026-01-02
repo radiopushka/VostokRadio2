@@ -45,6 +45,7 @@ struct FFT_rsmp{
     float** amplitude_ring_i;
 
     int OFbins;
+    float OF_scale;//minimum OF scaling for minimal distortion
 };
 
 struct FFT_rsmp *FFT_resample_init(int bins,int OF_bins,int ring_buffer_delay, float fs, float fend,float srate);

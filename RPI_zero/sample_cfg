@@ -4,12 +4,12 @@ oface=default
 [MPX]
 pilot_amp=0.15
 stereo_ratio=0.3
-OF_bins=1
+OF_bins=4
 [limiter]
 pre_amp=0.7
 lookahead=3
 post_amp=1
-limit=2.3e+9
+limit=2.5e+9
 save_harmonics=0.6
 bins=9
 [agc]

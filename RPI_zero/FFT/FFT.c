@@ -10,6 +10,8 @@ struct FFT_rsmp *FFT_resample_init(int bins,int OF_bins,int ring_buffer_delay, f
     rsmp->nalpha = 1-rsmp->alpha;
     rsmp->bins = bins;
 
+    rsmp->OF_scale = 1.0f/bins;
+
 
 
     int fft_buff_len = srate+240;//prevent clicking so that all synthesized signals are being sampled
@@ -220,7 +222,8 @@ float resamp_get_signal(struct FFT_rsmp *rsmp, float* eq){
     //Orthogonal highs
     float* last_bin = dend-rsmp->OFbins;
 
-    float output = 0;
+    float OF_scale = 1.0f - rsmp->OF_scale;
+    float output = 0.0f;
     for(float* restrict ic = darray + cnt;ic<dend;ic = ic+2,lpi++,lpr++,eq++){
 
 
@@ -230,7 +233,11 @@ float resamp_get_signal(struct FFT_rsmp *rsmp, float* eq){
             // only resample the cosine part of the fourie image
             // reduce the imaginary part
             // should help but far from ideal
-            sval = (*lpr)*(*ic) + (*lpi)*(*(ic+1))*0.5;
+            sval = (*lpr)*(*ic) + (*lpi)*(*(ic+1))*OF_scale;
+            if(OF_scale > 0.0f)
+                OF_scale = OF_scale - rsmp->OF_scale;
+            else
+                OF_scale = 0.0f;
         }else{
             sval = (*lpi)*(*(ic+1)) + (*lpr)*(*ic);
         }

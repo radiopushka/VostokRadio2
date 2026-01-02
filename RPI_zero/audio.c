@@ -19,6 +19,7 @@ const float int_value = 2147483647.0;
 //
 //user settings:
 float pilot_amp = 0.15;
+int OF_bins = 1;
 //post AGC limiter amp and image spectral limiter
 float pre_amp = 0.7;
 float post_amp =  1;
@@ -86,6 +87,12 @@ void setup_globals_from_config(char* file){
         stereo_ratio = atof(stereo_ratio_f);
         printf("stereo ratio: %f\n",stereo_ratio);
     }
+    char* OF_bins_f = get_value_by(cfg,"MPX","OF_bins");
+    if(OF_bins_f){
+        OF_bins = atof(OF_bins_f);
+        printf("Orthogonal(to 19 khz pilot) Frequency bins: %d\n",OF_bins);
+    }
+
 
     //limiter
     char* pre_amp_f = get_value_by(cfg,"limiter","pre_amp");
@@ -269,8 +276,8 @@ int main(int argn,char* argv[]){
     }
 
     //FFT resampling mono
-    struct FFT_rsmp *rsmp = FFT_resample_init(bins,lookahead, 1000, 16000, rate1);
-    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,lookahead, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp = FFT_resample_init(bins,OF_bins,lookahead, 1000, 16000, rate1);
+    struct FFT_rsmp *rsmp_st = FFT_resample_init(bins,OF_bins,lookahead, 1000, 16000, rate1);
     //gain controller
     struct Gain_Control *gc = gain_control_init(attack,release,target,noise_th);
 

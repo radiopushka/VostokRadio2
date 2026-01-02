@@ -43,9 +43,11 @@ struct FFT_rsmp{
     float** amplitude_ring;
     float** amplitude_ring_end;
     float** amplitude_ring_i;
+
+    int OFbins;
 };
 
-struct FFT_rsmp *FFT_resample_init(int bins,int ring_buffer_delay, float fs, float fend,float srate);
+struct FFT_rsmp *FFT_resample_init(int bins,int OF_bins,int ring_buffer_delay, float fs, float fend,float srate);
 int get_resamp_size(struct FFT_rsmp *rsmp);
 float* resamp_pre_process(struct FFT_rsmp *rsmp, float in,float* eq);
 

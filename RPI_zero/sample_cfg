@@ -4,6 +4,7 @@ oface=default
 [MPX]
 pilot_amp=0.15
 stereo_ratio=0.3
+OF_bins=1
 [limiter]
 pre_amp=0.7
 lookahead=3

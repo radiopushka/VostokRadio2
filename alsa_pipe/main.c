@@ -47,7 +47,7 @@ int rate=48000;
 int memcpy_size=1;
 
 int pcm_write(int* data,unsigned int size){
- 
+
  snd_pcm_t* ptr_cpy=NULL;
 
  pthread_mutex_lock(&pipe_access);
@@ -61,7 +61,7 @@ int pcm_write(int* data,unsigned int size){
     return -1;
   }
 
-  
+
  unsigned int bsize=size;
   if(output_channels>1){
     bsize=bsize>>1;
@@ -77,7 +77,6 @@ int pcm_write(int* data,unsigned int size){
   return 1;
 }
 
-int drop_bool=0;
 int forward_audio(){
   if(de_signal==1)
     return -1;
@@ -86,31 +85,21 @@ int forward_audio(){
   pthread_mutex_lock(&write_access);
   data_in_buff=data_in_buffer;
   //start to drop frames if buffer is close to underflowing
-  if(data_in_buff<start_drop){
-    drop_bool=~drop_bool;
-    if(drop_bool==0){
-      //printf("drop\n");
-      pthread_mutex_unlock(&write_access);
-      if(pcm_write(empty_buff,forward_buffer_size)==-1){
-        return -1;
-      }
-      return 1;
-    }
-  }
   //buffer underflow
-  if((data_in_buff<step_back && sink_state==0)||(data_in_buff>sink_back && sink_state==1)){
-  
-    
+  if((data_in_buff<step_back && sink_state==0)||(data_in_buff<sink_back && sink_state==1)){
+
+
     pthread_mutex_unlock(&write_access);
     if(pcm_write(empty_buff,forward_buffer_size)==-1){
       return -1;
     }
     sink_state=1;
-    
+
 
     return 1;
   }
   if(data_in_buff>=sink_back && sink_state==1){
+    printf("underflow re synced\n");
     //snd_pcm_drain(output);
     sink_state=0;
   }
@@ -119,7 +108,7 @@ int forward_audio(){
   unsigned int nosize=(start_ptr-input_buffer)*sizeof(int);
   memcpy(tmp_buff,start_ptr,memcpy_size);
 
-   
+
   if(data_in_buffer!=0){
     memcpy(input_buffer_helper,input_buffer,nosize);
     memcpy(input_buffer+forward_buffer_size,input_buffer_helper,nosize);
@@ -138,8 +127,18 @@ int forward_audio(){
   return 1;
 }
 
+char playback_iface_v[32];
 void* audio_thread_cont(void* arg){
-  pthread_detach(pthread_self()); 
+  pthread_detach(pthread_self());
+  snd_pcm_open(&output, playback_iface_v,SND_PCM_STREAM_PLAYBACK, 0);
+
+ unsigned int output_rate=rate;
+ int channels=2;
+ configure_sound_card(output,forward_buffer_size*STEP_BACK,(unsigned int*)&output_rate,&channels,SND_PCM_FORMAT_S32_LE);
+
+ snd_pcm_prepare(output);
+ snd_pcm_link(input,output);
+
   int status=0;
   while(status!=-1&&de_signal!=1){
     status=forward_audio();
@@ -153,14 +152,16 @@ void* audio_thread_cont(void* arg){
 int queue_overflow=0;
 int queue_audio(int* data){
   pthread_mutex_lock(&write_access);
-  
+
   //printf("%d %d\n",start_point,data_in_buffer);
   if(queue_overflow==1){
     if(data_in_buffer <= start_drop){
       queue_overflow=0;
+      printf("overflow\n");
     }else{
+      printf("overflow discard\n");
       pthread_mutex_unlock(&write_access);
-      return -1;
+      return 1;
     }
   }
   if(buffer_space<data_in_buffer){
@@ -171,13 +172,10 @@ int queue_audio(int* data){
 
   if(start_point==0){
 
+    queue_overflow=1;
     pthread_mutex_unlock(&write_access);
-    usleep(forward_buffer_size*((1.0/((float) rate))*1000000));
-    //usleep(7000000);
-    pthread_mutex_lock(&write_access);
-	  //snd_pcm_drain(output);
-	  //snd_pcm_prepare(output);
-    //usleep(7000000);
+    return 1;
+
   }
   //printf("%d %d\n",start_point,forward_buffer_size*SINK_BACK);
   /*if(synced==1){
@@ -198,7 +196,7 @@ int queue_audio(int* data){
   }
 
   //printf("new data\n");
-  
+
 
   pthread_mutex_unlock(&write_access);
   return 1;
@@ -226,11 +224,11 @@ int get_audio(int* data,int local_buffer_size){
 }
 
 void set_latency(int latency_buffers){
- logged=(unsigned int) latency_buffers; 
+ logged=(unsigned int) latency_buffers;
 }
 
 int setup_alsa_pipe(char* recording_iface, char* playback_iface, int* channels_in,int* channels_out,int* input_rate,int* output_rate, int buffer_Size){
- 
+
   //needed to configure alsa parameters
   forward_buffer_size=(unsigned int)buffer_Size;
   step_back=STEP_BACK*forward_buffer_size;
@@ -240,32 +238,39 @@ int setup_alsa_pipe(char* recording_iface, char* playback_iface, int* channels_i
 
   //alsa stuff
 
-	if ( snd_pcm_open(&output, playback_iface,SND_PCM_STREAM_PLAYBACK, 0) < 0){		
-		printf("unable to open playback interface\n");
-		return -1;
-	} 
-  if ( snd_pcm_open(&input, recording_iface,SND_PCM_STREAM_CAPTURE, 0) < 0){		
+  if ( snd_pcm_open(&input, recording_iface,SND_PCM_STREAM_CAPTURE, 0) < 0){
 		printf("unable to open recording interface\n");
 		return -1;
-	} 
+	}
 
-	if(configure_sound_card(output,forward_buffer_size*STEP_BACK,(unsigned int*)output_rate,channels_out,SND_PCM_FORMAT_S32_LE)<0){
-    printf("play config failed \n");
+	if ( snd_pcm_open(&output, playback_iface,SND_PCM_STREAM_PLAYBACK, 0) < 0){
+		printf("unable to open playback interface\n");
 		return -1;
 	}
 	if(configure_sound_card(input,forward_buffer_size*STEP_BACK,(unsigned int*)input_rate,channels_in,SND_PCM_FORMAT_S32_LE)<0){
     printf("record config failed \n");
 		return -1;
 	}
+    //check all parameters
+	if(configure_sound_card(output,forward_buffer_size*STEP_BACK,(unsigned int*)output_rate,channels_out,SND_PCM_FORMAT_S32_LE)<0){
+    printf("play config failed \n");
+		return -1;
+	}
+
+    sprintf(playback_iface_v,"%s",playback_iface);
 
   rate = *output_rate;
-  snd_pcm_link(input,output);//synchornize
-	snd_pcm_prepare(output);
 	snd_pcm_prepare(input);
+
+    //free this output and create it again in the separate thread
+    //hack to fix alsa bugs
+    snd_pcm_hw_free(output);
+    snd_pcm_close(output);
+
 
   output_channels=*channels_out;
   input_channels=*channels_in;
-  
+
   buffer_space=forward_buffer_size*logged;
   start_point=forward_buffer_size*(logged-1);
   data_in_buffer=0;
@@ -294,11 +299,11 @@ void alsa_pipe_exit(){
 	  pthread_mutex_lock(&pipe_access);
     de_signal=1;
 	  pthread_mutex_unlock(&pipe_access);
-    
+
     pthread_join(playback_thread,NULL);
-    
+
     //pthread_destroy(playback_thread);
-  
+
 
 	  snd_pcm_hw_free(input);
     snd_pcm_close(input);
